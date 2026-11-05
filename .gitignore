@@ -1,0 +1,4 @@
+*.vvp
+*.vcd
+__pycache__/
+*.log
