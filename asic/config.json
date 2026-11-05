@@ -1,0 +1,9 @@
+{
+  "DESIGN_NAME": "phoenixcore_top",
+  "VERILOG_FILES": ["dir::phoenixcore_top.v"],
+  "CLOCK_PORT": "clk_50mhz",
+  "CLOCK_PERIOD": 10.0,
+  "FP_CORE_UTIL": 45,
+  "PL_TARGET_DENSITY_PCT": 50,
+  "SYNTH_STRATEGY": "AREA 0"
+}
