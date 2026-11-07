@@ -1,0 +1,8 @@
+read_verilog phoenixcore_asic_macro.v
+hierarchy -check -top phoenixcore_asic_macro
+synth -top phoenixcore_asic_macro
+abc -g AND,NAND,OR,NOR,XOR,XNOR,MUX
+opt_clean
+stat
+write_verilog -noattr phoenixcore_asic_macro_netlist.v
+write_json phoenixcore_asic_macro.json

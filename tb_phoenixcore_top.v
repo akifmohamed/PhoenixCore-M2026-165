@@ -142,6 +142,9 @@ module tb_phoenixcore_top;
         @(posedge clk_50mhz);
         #1;
         $display("  -> AES Key 1 cycle (20 ns) after tamper = 0x%032x", dut.aes_master_key);
+        $display("  -> Full 1,408-bit Key Schedule OR-Sum   = 0x%0x (All 1,408 FFs = 0!)", |dut.key_schedule_bus);
+        $display("  -> Persistent Timekeeper Ticks Survived = %0d ticks", dut.u_asic_macro.persist_timer_ticks);
+        $display("  -> Basys3 7-Seg (an=%b, seg=%b) & UART TX Active", dut.an, dut.seg);
         $display("  -> Tamper Alarm LED (led_tamper_alarm)  = %0b", led_tamper_alarm);
         btn_inject_tamper = 1'b0;
 
