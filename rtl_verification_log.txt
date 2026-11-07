@@ -1,0 +1,31 @@
+VCD info: dumpfile phoenixcore_wave.vcd opened for output.
+======================================================================
+ PHOENIXCORE (M2026-165 | NEXUS V) OPEN-SOURCE RTL VERIFICATION SUITE
+======================================================================
+
+[TEST 1] Running RV32I workload to dirty SRAM blocks (Vcap = 3300 mV)...
+  -> Observed Live Dirty Block Count (N_dirty) = 33 blocks
+  -> Observed Dynamic PDAT Trigger Threshold   = 1864 mV
+  [PASS] 0-Cycle Bus-Snoop Dirty Bitmap tracked 33 dirty blocks.
+
+[TEST 2] Dropping Vcap to 1830 mV to trigger Word-Masked Save & dV Aging Calibration...
+  -> Checkpoint DMA & Pre-Crypto Word-Masking active (led_ckpt_busy = 1)...
+  -> Committed Generation ID = 1
+  -> Closed-Loop dV Aging Offset (v_aging_offset_mv) = +25 mV
+  [PASS] Generation 1 committed atomically & dV Aging Calibrator incremented +25 mV!
+
+[TEST 3] Injecting mid-checkpoint TORN-WRITE power cut during Generation 2 save...
+  -> Post-Recovery Authoritative Generation ID = 1 (Expected: 1, torn Gen 2 discarded)
+  -> Restore Verified Status (led_restore_ok)  = 1
+  [PASS] Torn mid-save write safely ignored; Generation 1 restored with 0 corruption!
+
+[TEST 4] Injecting adversarial tamper/rollback event (btn_inject_tamper = 1)...
+  -> AES Key before tamper = 0xa55a9c3ff00dcafe13572468deadbeef
+  -> AES Key 1 cycle (20 ns) after tamper = 0x00000000000000000000000000000000
+  -> Tamper Alarm LED (led_tamper_alarm)  = 1
+  [PASS] 1-Cycle Hardware Key Zeroization verified in 20 ns (1 clock tick)!
+
+======================================================================
+ SUMMARY: 4 / 4 HARDWARE VERIFICATION TESTS PASSED (0 FAILED)
+ Waveform saved to: phoenixcore_wave.vcd
+======================================================================

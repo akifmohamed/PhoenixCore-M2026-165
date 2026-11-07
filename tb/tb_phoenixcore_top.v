@@ -3,9 +3,6 @@
 // Project     : PhoenixCore: Secure Energy-Aware Checkpoint Engine (M2026-165)
 // Team        : NEXUS V
 // Tool Flow   : Icarus Verilog (iverilog + vvp) & GTKWave (Ubuntu Open-Source)
-// Run Command : iverilog -o phoenixcore_sim.vvp phoenixcore_top.v tb_phoenixcore_top.v
-//               vvp phoenixcore_sim.vvp
-//               gtkwave phoenixcore_wave.vcd
 // =============================================================================
 `timescale 1ns / 1ps
 
@@ -27,7 +24,6 @@ module tb_phoenixcore_top;
     wire        led_tamper_alarm;
     wire [15:0] committed_gen_id;
 
-    // Instantiate DUT (PhoenixCore SoC Top)
     phoenixcore_top dut (
         .clk_50mhz        (clk_50mhz),
         .rst_n            (rst_n),
@@ -46,7 +42,6 @@ module tb_phoenixcore_top;
         .committed_gen_id (committed_gen_id)
     );
 
-    // 50 MHz System Clock (20 ns period)
     initial clk_50mhz = 1'b0;
     always #10 clk_50mhz = ~clk_50mhz;
 
@@ -63,22 +58,21 @@ module tb_phoenixcore_top;
         sw_ext_fram_mode  = 1'b0;
         btn_inject_cut    = 1'b0;
         btn_inject_tamper = 1'b0;
-        adc_vcap_mv       = 12'd3300; // Full 3.30 V capacitor charge
+        adc_vcap_mv       = 12'd3300;
         spi_miso          = 1'b0;
 
         $display("======================================================================");
         $display(" PHOENIXCORE (M2026-165 | NEXUS V) OPEN-SOURCE RTL VERIFICATION SUITE");
         $display("======================================================================");
 
-        // Release Reset
         #60;
         rst_n = 1'b1;
 
         // ---------------------------------------------------------------------
-        // TEST 1: 0-Cycle Bus-Snoop Dirty Tracking + Word-Masked Save + Commit
+        // TEST 1: 0-Cycle Bus-Snoop Dirty Tracking
         // ---------------------------------------------------------------------
         $display("\n[TEST 1] Running RV32I workload to dirty SRAM blocks (Vcap = 3300 mV)...");
-        #2000; // Let CPU execute stores across 64-byte blocks
+        #2000;
         $display("  -> Observed Live Dirty Block Count (N_dirty) = %0d blocks", led_dirty_count);
         $display("  -> Observed Dynamic PDAT Trigger Threshold   = %0d mV", dut.v_trig_mv);
 
@@ -90,14 +84,16 @@ module tb_phoenixcore_top;
             fail_count = fail_count + 1;
         end
 
-        // Drop Vcap below dynamic V_trig to initiate Checkpoint Generation 1
-        // Also test Closed-Loop dV Capacitor-Aging Self-Calibration by setting V_end = 1830 mV (< 1850 mV)
+        // ---------------------------------------------------------------------
+        // TEST 2: Word-Masked Save, Commit-Last, & Closed-Loop dV Aging Cal.
+        // ---------------------------------------------------------------------
         $display("\n[TEST 2] Dropping Vcap to 1830 mV to trigger Word-Masked Save & dV Aging Calibration...");
         adc_vcap_mv = 12'd1830;
-        wait (led_ckpt_busy == 1'b1);
+        while (led_ckpt_busy == 1'b0) @(posedge clk_50mhz);
         $display("  -> Checkpoint DMA & Pre-Crypto Word-Masking active (led_ckpt_busy = 1)...");
-        wait (led_ckpt_busy == 1'b0);
-        #40;
+        while (led_ckpt_busy == 1'b1) @(posedge clk_50mhz);
+        @(posedge clk_50mhz);
+        #5;
 
         $display("  -> Committed Generation ID = %0d", committed_gen_id);
         $display("  -> Closed-Loop dV Aging Offset (v_aging_offset_mv) = +%0d mV", dut.v_aging_offset_mv);
@@ -109,7 +105,7 @@ module tb_phoenixcore_top;
             fail_count = fail_count + 1;
         end
 
-        // Restore Vcap to 3.30 V and dirty more blocks
+        // Restore Vcap to 3.30 V and dirty more blocks for Generation 2
         adc_vcap_mv = 12'd3300;
         #1200;
 
@@ -117,14 +113,14 @@ module tb_phoenixcore_top;
         // TEST 3: Mid-Save Torn-Write Power Cut Injection (Commit-Last Proof)
         // ---------------------------------------------------------------------
         $display("\n[TEST 3] Injecting mid-checkpoint TORN-WRITE power cut during Generation 2 save...");
-        adc_vcap_mv = 12'd1840; // Trigger Generation 2 save
-        wait (led_ckpt_busy == 1'b1);
-        #200; // Wait until middle of dirty block streaming (before Commit Frame!)
+        adc_vcap_mv = 12'd1840;
+        while (led_ckpt_busy == 1'b0) @(posedge clk_50mhz);
+        #400; // Wait until middle of dirty block streaming (before Commit Frame!)
         btn_inject_cut = 1'b1; // SUDDEN BROWNOUT MID-SAVE!
         #60;
         btn_inject_cut = 1'b0;
-        adc_vcap_mv    = 12'd3300; // Power returns
-        #1600; // Allow boot parser & register restore to complete
+        adc_vcap_mv    = 12'd3300; // Power returns -> triggers ST_BOOT_CHECK -> ST_RESTORE_REGS
+        #1200;
 
         $display("  -> Post-Recovery Authoritative Generation ID = %0d (Expected: 1, torn Gen 2 discarded)", committed_gen_id);
         $display("  -> Restore Verified Status (led_restore_ok)  = %0b", led_restore_ok);
@@ -143,7 +139,7 @@ module tb_phoenixcore_top;
         $display("  -> AES Key before tamper = 0x%032x", dut.aes_master_key);
         @(posedge clk_50mhz);
         btn_inject_tamper = 1'b1;
-        @(posedge clk_50mhz); // 1 single clock cycle (20 ns)!
+        @(posedge clk_50mhz);
         #1;
         $display("  -> AES Key 1 cycle (20 ns) after tamper = 0x%032x", dut.aes_master_key);
         $display("  -> Tamper Alarm LED (led_tamper_alarm)  = %0b", led_tamper_alarm);
