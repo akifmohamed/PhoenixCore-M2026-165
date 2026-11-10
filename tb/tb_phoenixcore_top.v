@@ -136,19 +136,19 @@ module tb_phoenixcore_top;
         // TEST 4: Adversarial Tamper / Rollback Injection -> 1-Cycle Key Zeroize
         // ---------------------------------------------------------------------
         $display("\n[TEST 4] Injecting adversarial tamper/rollback event (btn_inject_tamper = 1)...");
-        $display("  -> AES Key before tamper = 0x%032x", dut.aes_master_key);
+        $display("  -> AES Key before tamper = 0x%032x", dut.u_asic_macro.aes_expanded_key_regs[127:0]);
         @(posedge clk_50mhz);
         btn_inject_tamper = 1'b1;
         @(posedge clk_50mhz);
         #1;
-        $display("  -> AES Key 1 cycle (20 ns) after tamper = 0x%032x", dut.aes_master_key);
-        $display("  -> Full 1,408-bit Key Schedule OR-Sum   = 0x%0x (All 1,408 FFs = 0!)", |dut.key_schedule_bus);
+        $display("  -> AES Key 1 cycle (20 ns) after tamper = 0x%032x", dut.u_asic_macro.aes_expanded_key_regs[127:0]);
+        $display("  -> Full 1,408-bit Key Schedule OR-Sum   = 0x%0x (All 1,408 FFs = 0!)", |dut.u_asic_macro.aes_expanded_key_regs);
         $display("  -> Persistent Timekeeper Ticks Survived = %0d ticks", dut.u_asic_macro.persist_timer_ticks);
         $display("  -> Basys3 7-Seg (an=%b, seg=%b) & UART TX Active", dut.an, dut.seg);
         $display("  -> Tamper Alarm LED (led_tamper_alarm)  = %0b", led_tamper_alarm);
         btn_inject_tamper = 1'b0;
 
-        if ((dut.aes_master_key == 128'd0) && (led_tamper_alarm == 1'b1)) begin
+        if ((dut.u_asic_macro.aes_expanded_key_regs[127:0] == 128'd0) && (led_tamper_alarm == 1'b1)) begin
             $display("  [PASS] 1-Cycle Hardware Key Zeroization verified in 20 ns (1 clock tick)!");
             pass_count = pass_count + 1;
         end else begin

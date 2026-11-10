@@ -1,0 +1,173 @@
+{
+  "comparison_3way": [
+    {
+      "workload": "Case 1: Sparse (12.5% Blk, 6/16 Words)",
+      "dirty_blocks": 32,
+      "active_words_per_blk": 6,
+      "sw_bytes": 16536,
+      "bd_bytes": 2456,
+      "pc_bytes": 1240,
+      "pc_vs_sw_byte_red_pct": 92.5,
+      "pc_vs_bd_byte_red_pct": 49.5,
+      "sw_latency_ms": 11.244,
+      "bd_latency_ms": 0.818,
+      "pc_latency_ms": 0.409,
+      "sw_energy_uj": 211.51,
+      "bd_energy_uj": 15.38,
+      "pc_energy_uj": 7.7,
+      "pc_vs_sw_energy_red_pct": 96.4,
+      "pc_vs_bd_energy_red_pct": 49.9,
+      "v_trig_sw_v": 2.884,
+      "v_trig_bd_v": 1.9,
+      "v_trig_pc_v": 1.851,
+      "usable_sw_uj": 128.7,
+      "usable_bd_uj": 364.0,
+      "usable_pc_uj": 373.3,
+      "sw_full_restore_us": 5291.5,
+      "bd_full_restore_us": 785.9,
+      "hot_restore_us": 89.6
+    },
+    {
+      "workload": "Case 2: Moderate (25% Blk, 7/16 Words)",
+      "dirty_blocks": 64,
+      "active_words_per_blk": 7,
+      "sw_bytes": 16536,
+      "bd_bytes": 4760,
+      "pc_bytes": 2584,
+      "pc_vs_sw_byte_red_pct": 84.4,
+      "pc_vs_bd_byte_red_pct": 45.7,
+      "sw_latency_ms": 11.244,
+      "bd_latency_ms": 1.586,
+      "pc_latency_ms": 0.855,
+      "sw_energy_uj": 211.51,
+      "bd_energy_uj": 29.83,
+      "pc_energy_uj": 16.08,
+      "pc_vs_sw_energy_red_pct": 92.4,
+      "pc_vs_bd_energy_red_pct": 46.1,
+      "v_trig_sw_v": 2.884,
+      "v_trig_bd_v": 1.989,
+      "v_trig_pc_v": 1.904,
+      "usable_sw_uj": 128.7,
+      "usable_bd_uj": 346.7,
+      "usable_pc_uj": 363.2,
+      "sw_full_restore_us": 5291.5,
+      "bd_full_restore_us": 1523.2,
+      "hot_restore_us": 89.6
+    },
+    {
+      "workload": "Case 3: Dense (50% Blk, 8/16 Words)",
+      "dirty_blocks": 128,
+      "active_words_per_blk": 8,
+      "sw_bytes": 16536,
+      "bd_bytes": 9368,
+      "pc_bytes": 5528,
+      "pc_vs_sw_byte_red_pct": 66.6,
+      "pc_vs_bd_byte_red_pct": 41.0,
+      "sw_latency_ms": 11.244,
+      "bd_latency_ms": 3.122,
+      "pc_latency_ms": 1.831,
+      "sw_energy_uj": 211.51,
+      "bd_energy_uj": 58.72,
+      "pc_energy_uj": 34.45,
+      "pc_vs_sw_energy_red_pct": 83.7,
+      "pc_vs_bd_energy_red_pct": 41.3,
+      "v_trig_sw_v": 2.884,
+      "v_trig_bd_v": 2.156,
+      "v_trig_pc_v": 2.017,
+      "usable_sw_uj": 128.7,
+      "usable_bd_uj": 312.0,
+      "usable_pc_uj": 341.2,
+      "sw_full_restore_us": 5291.5,
+      "bd_full_restore_us": 2997.8,
+      "hot_restore_us": 89.6
+    }
+  ],
+  "capacitor_aging": [
+    {
+      "c_actual_uf": 100,
+      "degradation_pct": 0,
+      "bd_v_end_v": 1.848,
+      "bd_survives": true,
+      "pc_v_trig_adapted_v": 2.015,
+      "pc_v_end_v": 1.838,
+      "pc_survives": true
+    },
+    {
+      "c_actual_uf": 90,
+      "degradation_pct": 10,
+      "bd_v_end_v": 1.813,
+      "bd_survives": true,
+      "pc_v_trig_adapted_v": 2.037,
+      "pc_v_end_v": 1.842,
+      "pc_survives": true
+    },
+    {
+      "c_actual_uf": 80,
+      "degradation_pct": 20,
+      "bd_v_end_v": 1.767,
+      "bd_survives": false,
+      "pc_v_trig_adapted_v": 2.065,
+      "pc_v_end_v": 1.847,
+      "pc_survives": true
+    },
+    {
+      "c_actual_uf": 70,
+      "degradation_pct": 30,
+      "bd_v_end_v": 1.707,
+      "bd_survives": false,
+      "pc_v_trig_adapted_v": 2.1,
+      "pc_v_end_v": 1.853,
+      "pc_survives": true
+    },
+    {
+      "c_actual_uf": 60,
+      "degradation_pct": 40,
+      "bd_v_end_v": 1.623,
+      "bd_survives": false,
+      "pc_v_trig_adapted_v": 2.146,
+      "pc_v_end_v": 1.862,
+      "pc_survives": true
+    },
+    {
+      "c_actual_uf": 55,
+      "degradation_pct": 45,
+      "bd_v_end_v": 1.567,
+      "bd_survives": false,
+      "pc_v_trig_adapted_v": 2.175,
+      "pc_v_end_v": 1.868,
+      "pc_survives": true
+    }
+  ],
+  "fault_campaign": {
+    "compute_cut": {
+      "trials": 167,
+      "pass": 167,
+      "fail": 0
+    },
+    "reg_save_cut": {
+      "trials": 167,
+      "pass": 167,
+      "fail": 0
+    },
+    "delta_payload_torn_cut": {
+      "trials": 167,
+      "pass": 167,
+      "fail": 0
+    },
+    "commit_frame_torn_cut": {
+      "trials": 167,
+      "pass": 167,
+      "fail": 0
+    },
+    "post_commit_cut": {
+      "trials": 166,
+      "pass": 166,
+      "fail": 0
+    },
+    "tamper_or_rollback_inject": {
+      "trials": 166,
+      "pass": 166,
+      "fail": 0
+    }
+  }
+}

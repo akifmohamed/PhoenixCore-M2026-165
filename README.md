@@ -1,137 +1,122 @@
 # PhoenixCore: Secure Energy-Aware Checkpoint Engine for Batteryless Edge Devices
 
-**Event:** VConnecTech Engineering Marathon 2026 (Organized by VConnecTech Systems Pvt. Ltd. in association with IEEE Madras Section, IEEE CAS, Silicon Setu, & IEEE India Council)
-
-**Team ID:** `M2026-165` | **Team Name:** `NEXUS V`
-
+**Event:** VConnecTech Engineering Marathon 2026 (Organized by VConnecTech Systems Pvt. Ltd. in association with IEEE Madras Section, IEEE CAS, Silicon Setu, & IEEE India Council)  
+**Team ID:** `M2026-165` | **Team Name:** `NEXUS V`  
 **Track / Domain:** Architecture & Package Design / System Design (`+ FPGA Design, Embedded Software, Hardware Security`)
+
+---
 
 ## 1. Overview & Problem Addressed
 
 Batteryless edge nodes running on harvested solar, piezoelectric, or RF energy experience frequent supply brownouts ($V_{\text{cap}} < V_{\min} = 1.80\,\text{V}$) that wipe volatile CPU registers and SRAM. While recent state-of-the-art architectures (**DiCA, ICCAD 2023**; **Palanisamy et al., ISQED 2025**) introduced block-level differential checkpointing and voltage triggers, they suffer from four hardware bottlenecks in real field deployments:
 
-1. **Intra-Block Ciphertext Expansion:** Encrypting an entire 64-byte dirty block when only a few 32-bit words changed turns zero/unchanged words into high-entropy ciphertext, wasting **41%–50% of SPI FRAM write energy**.
-
+1. **Intra-Block Ciphertext Expansion:** Encrypting an entire 64-byte dirty block when only a few 32-bit words are non-zero turns intra-block zero-valued words (`word == 0x00000000`, common in zero-initialized stacks, zero-padded sensor buffers, and ReLU-clamped TinyML activations) into high-entropy ciphertext, wasting **41%–50% of SPI FRAM write energy**.
 2. **Capacitor-Aging Blindness:** Fixed-capacitance trigger equations ($C = \text{const}$) trigger too late and crash mid-save when field aging or temperature derating reduces capacitance by $\ge 20\%$.
-
-3. **Full-Restore Boot Stalls:** Holding the CPU in reset until the entire checkpoint image streams back from serial FRAM delays wake-up by `0.7–2.7 ms`.
-
+3. **Full-Restore Boot Stalls:** Holding the CPU in reset until the entire checkpoint image streams back over 25 MHz SPI FRAM (`0.32 µs/B`) delays wake-up by `0.79–5.29 ms`.
 4. **Rollback & Glitch Vulnerability:** Static encryption keys on external serial FRAM remain vulnerable to mid-byte torn writes, checkpoint replay/rollback attacks, and brownout fault-injection glitches.
 
-**PhoenixCore** resolves all four bottlenecks inside a compact **`925-LUT` (`4.4%` of Artix-7 `XC7A35T`) / `4.1 kGE` (`Sky130A`)** hardware IP core coupled to a `PicoRV32` (`RV32I`) processor, `16 KB` volatile SRAM (`256 × 64B` blocks), and `32 KB` SPI FRAM (`25 MHz`).
+**PhoenixCore** resolves all four bottlenecks inside a verified **`4,580-LUT` (`22.02%` of Artix-7 `XC7A35T`, `8,046` total Yosys cells = `8,044` Xilinx logic/register primitives + `2` hard BRAM macros [`12 × RAMB36E1`])** full SoC and a **DRC/LVS/STA-clean SkyWater 130 nm (`Sky130A`) GDSII ASIC macro** (`357.69 µm × 368.41 µm` die, **`55.53%` OpenROAD GPL placement utilization** [`54.12%` raw cell/core area ratio], `6,199` physical instances, **`939` sequential DFFs** via on-the-fly round-key expansion and direct FRAM shadow streaming, down from `3,219` unoptimized DFFs) coupled to a `PicoRV32` (`RV32I`) processor, `16 KB` volatile SRAM (`256 × 64B` blocks), and `32 KB` wide-$V_{DD}$ SPI FRAM (`Fujitsu MB85RS256TY`, `1.8–3.6 V`, `25 MHz`).
+
+---
 
 ## 2. Four Core Micro-Architectural Innovations
 
-| Module | Micro-Architectural Mechanism | Measured / Simulated Advantage | 
-| ----- | ----- | ----- | 
-| **1. `PC-WMC`** | **Pre-Crypto Sub-Block Word-Mask Compression:** 0-wait-state 256-bit block dirty bitmap + 1-cycle 16-bit active-word mask (`w_mask[15:0]`) that strips zero/unchanged 32-bit words *before* AES stream encryption. | **41.3%–49.9% lower save energy** than DiCA'23 / ISQED'25 (`83.7%–96.4%` below SW full-copy). | 
-| **2. `SH-PDAT`** | **Self-Healing Closed-Loop** $\Delta V$ **Capacitor-Aging Trigger:** Latches $V_{\text{start}}$ and $V_{\text{end}}$ across every checkpoint to calibrate effective capacitance $C_{\text{eff}} = 2E_{\text{save}}/(V_{\text{start}}^2 - V_{\text{end}}^2)$ in hardware. | **Survives up to 45% capacitor aging** (`100 µF → 55 µF`), whereas fixed-$C$ triggers fail at $\le 80\,\mu\text{F}$. | 
-| **3. `CLJ-HPR`** | **Commit-Last Journal + 2-Block Hot-Priority Restore:** Appends a 16-byte Atomic Commit Frame (`0x5043`) last and restores CPU registers + active Stack/Data blocks *first* on reboot. | **`89.6 µs` wake-up time-to-first-instruction** (`7.9×–29.8×` faster resume) & `668/668` torn-write survival. | 
-| **4. `Zeroizer`** | **Monotonic Anti-Rollback MAC + 1-Cycle Key Zeroizer:** Binds every Commit MAC to a 64-bit monotonic generation counter and wipes `1,408` key/state register bits in **1 clock cycle (`20 ns`)** on tamper. | **`166/166` (`100%`) detection** of bit-flip tamper and stale-generation rollback attacks. | 
+| Module | Micro-Architectural Mechanism | Measured / Simulated Advantage |
+| :--- | :--- | :--- |
+| **1. `PC-WMC`** | **Pre-Crypto Sub-Block Zero-Word Mask Compression:** 0-wait-state 256-bit (`8×32` banked) block dirty bitmap + 1-cycle 16-bit active-word mask (`w_mask[15:0]`) that suppresses intra-block zero-valued 32-bit words (`word == 0`) *before* AES stream encryption (`w_mask` is MAC-authenticated). | **41.3%–49.9% lower save energy** than DiCA'23 / ISQED'25 (`83.7%–96.4%` below SW full-copy). |
+| **2. `SH-PDAT`** | **Self-Healing Closed-Loop $\Delta V$ Capacitor-Aging Trigger:** Computes $E_{\text{save}}$ digitally from `total_active_words_saved` and latches $V_{\text{start}}, V_{\text{end}}$ across every checkpoint to calibrate effective capacitance $C_{\text{eff}}$ (+25 mV step when $V_{\text{end}} < 1.85\,\text{V}$; $\gamma = 1.20$ safety margin absorbs 1-save lag). | **Survives up to 45% capacitor aging** (`100 µF → 55 µF`), whereas fixed-$C$ triggers fail at $\le 80\,\mu\text{F}$. |
+| **3. `CLJ-HPR`** | **Commit-Last Journal + 2-Block Hot-Priority Restore:** Appends a 16-byte Atomic Commit Frame (`0x5043`) last and restores `136 B` CPU registers + `2 × 64 B` active Stack/Data blocks (`280 B` total) *first* on reboot. | **`89.6 µs` wake-up time-to-first-instruction** (`8.8×–33.5×` faster than DiCA; `59.0×` faster than SW) & `668/668` torn-write survival. |
+| **4. `Zeroizer`** | **Monotonic Anti-Rollback MAC + 1-Cycle Key Zeroizer:** Root key & 64-bit monotonic counter persist in on-chip OTP/BBRAM (or `ATECC608B`); active round-key DFFs zeroize in **1 clock cycle (`20 ns`)** on tamper/rollback. | **`166/166` (`100%`) detection** of bit-flip tamper and stale-generation rollback attacks in `20 ns`. |
+
+---
 
 ## 3. Repository Structure
 
-```
+```text
 PhoenixCore-M2026-165/
-├── README.md                          # Setup, build, and 1-command reproducibility guide
-├── requirements.txt                   # Python dependencies (standard library + matplotlib for plots)
-├── run_ubuntu_flow.sh                 # 1-command automation script (Python Sim + Icarus + Yosys + GTKWave)
-├── rtl/
-│   └── phoenixcore_top.v              # Synthesizable RV32I + PhoenixCore SoC RTL (Verilog-2005)
-├── tb/
-│   └── tb_phoenixcore_top.v           # Self-checking 4-stage hardware verification testbench
-├── sim/
-│   └── phoenixcore_brownout_sim.py    # 1,000-trial seeded brownout, 3-way benchmark, & cap-aging simulator
-├── fpga/
-│   └── basys3_phoenixcore.xdc         # Xilinx Vivado pin & timing constraints for Digilent Basys3 (XC7A35T)
-├── asic/
-│   ├── synth_phoenixcore.ys           # Yosys open-source gate-level synthesis script
-│   └── config.json                    # OpenLane 2 configuration for SkyWater 130 nm (Sky130A) RTL-to-GDSII
+├── README.md                                  # Setup, build, and 1-command reproducibility guide
+├── requirements.txt                           # Python dependencies
+├── run_ubuntu_flow.sh                         # 6-stage automation script (Sim + Icarus + Yosys + OpenLane 2)
+├── phoenixcore_asic_macro.v                   # DRC/LVS/STA-clean synthesizable PhoenixCore ASIC/FPGA IP macro
+├── phoenixcore_top.v                          # Top-level RV32I + INT8 TinyML MAC + PhoenixCore SoC + BRAM macros
+├── tb_phoenixcore_top.v                       # Self-checking 4-stage hardware verification testbench
+├── phoenixcore_brownout_sim.py                # 1,000-trial seeded brownout, 3-way benchmark, & cap-aging simulator
+├── sim_1000_trials_report.json                # Deterministic JSON output of 1,000-trial simulation
+├── basys3_phoenixcore.xdc                     # Xilinx Vivado pin & timing constraints for Digilent Basys3 (XC7A35T)
+├── phoenixcore_asic_macro.sdc                 # OpenSTA-native Synopsys Design Constraints for Sky130A PnR & Signoff
+├── config.json                                # OpenLane 2 configuration for SkyWater 130 nm (Sky130A) RTL-to-GDSII
+├── rtl/                                       # Mirror of modular RTL files
+├── tb/                                        # Mirror of testbench files
+├── sim/                                       # Mirror of Python simulator & JSON report
+├── fpga/                                      # Mirror of Basys3 XDC constraints
+├── asic/                                      # Mirror of OpenLane 2 config.json & SDC constraints
 └── docs/
-    ├── M2026-165_PhoenixCore_DPR.pdf  # Final IEEE Two-Column Detailed Project Report (DPR)
-    └── M2026-165_PhoenixCore_DPR.docx # Editable DPR source document
-
+    ├── M2026-165_PhoenixCore_DPR.pdf          # Final 8-Page IEEE Two-Column Detailed Project Report (DPR)
+    ├── M2026-165_PhoenixCore_DPR.docx         # Editable DPR source document
+    └── M2026-165_PhoenixCore_MidWork_Review.pptx # 9-Slide Mid-Work Progress Review Presentation (13 Nov 2026)
 ```
+
+---
 
 ## 4. Quick-Start & Reproducibility Guide (Evaluator Clean-Environment Setup)
 
-### Prerequisites (Ubuntu 22.04 / 24.04 LTS or WSL2)
-
-```
-sudo apt update
-sudo apt install -y python3 python3-pip iverilog gtkwave yosys
-
-```
-
-### Option A: One-Command Full Verification & Synthesis Flow
-
-From the repository root (or flat working directory), execute:
-
-```
+### Option A: One-Command Full Verification, Synthesis, & GDSII Flow
+```bash
 chmod +x run_ubuntu_flow.sh
 ./run_ubuntu_flow.sh
-
 ```
 
-### Option B: Step-by-Step Manual Execution
+### Option B: Step-by-Step Execution
+```bash
+# 1. Run 1,000-Trial Brownout, 3-Way Benchmark, & Capacitor-Aging Simulator
+python3 phoenixcore_brownout_sim.py > sim_1000_trials_report.json
 
-1. **Run the 1,000-Trial Brownout, 3-Way Benchmark, & Capacitor-Aging Simulator:**
+# 2. Run Cycle-Accurate RTL Simulation (4/4 Hardware Tests Pass) & View Waveform
+iverilog -o phoenixcore_sim.vvp phoenixcore_asic_macro.v phoenixcore_top.v tb_phoenixcore_top.v
+vvp phoenixcore_sim.vvp | tee rtl_verification_log.txt
+gtkwave phoenixcore_wave.vcd
 
-   ```
-   python3 phoenixcore_brownout_sim.py
-   
-   ```
+# 3. Run Yosys ASIC Macro & Xilinx Artix-7 Basys3 Synthesis
+yosys -s synth_asic_macro.ys | tee yosys_asic_macro_report.txt
+yosys -s synth_basys3_fpga.ys | tee yosys_basys3_fpga_utilization.txt
 
-   *Outputs deterministic JSON metrics for Sparse (`12.5%`), Moderate (`25.0%`), and Dense (`50.0%`) workloads, the `100 µF → 55 µF` capacitor-aging sweep, and `1,000/1,000` seeded fault-injection trials (`Seed = 2026165`).*
+# 4. Run OpenLane 2 Sky130A RTL-to-GDSII Signoff Flow
+openlane config.json || nix run github:efabless/openlane2 -- config.json
+```
 
-2. **Run Cycle-Accurate RTL Simulation (`iverilog` + `vvp`) & Inspect Waveforms (`gtkwave`):**
+---
 
-   ```
-   iverilog -o phoenixcore_sim.vvp phoenixcore_top.v tb_phoenixcore_top.v
-   vvp phoenixcore_sim.vvp
-   gtkwave phoenixcore_wave.vcd
-   
-   ```
+## 5. Benchmark Summary (`50 MHz` Core, `25 MHz` SPI FRAM [`0.32 µs/B`], `100 µF` Buffer)
 
-   *Verifies all 4 hardware tests (`[PASS] 4 / 4 HARDWARE VERIFICATION TESTS PASSED`): (1) 0-cycle bus-snoop dirty tracking, (2) pre-crypto word-masked commit &* $+\text{25 mV}$ $\Delta V$ *aging calibration, (3) mid-save torn-write rollback to Generation 1, and (4) 1-cycle (`20 ns`) AES key zeroization on tamper.*
+| Workload / Scheme | FRAM Bytes Written | Save Latency | Save Energy | Wake-Up Latency (`@ 25 MHz` SPI) | Capacitor-Aging Survival (`100 → 55 µF`) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **SW Full-Copy Baseline [1],[2]** | `16,536 B` | `11.244 ms` | `211.51 µJ` | `5,291.5 µs` | Fails at $\le 90\,\mu\text{F}$ (`10%` loss) |
+| **Case 1 (Sparse 12.5%, $k=6/16$): DiCA / ISQED'25 [5],[7]** | `2,456 B` | `0.818 ms` | `15.38 µJ` | `785.9 µs` | Fails at $\le 80\,\mu\text{F}$ (`20%` loss) |
+| **Case 1 (Sparse 12.5%, $k=6/16$): PhoenixCore (Ours)** | **`1,240 B` (`-49.5%`)** | **`0.409 ms`** | **`7.70 µJ` (`-49.9%`)** | **`89.6 µs` (`8.8×` faster)** | **Survives down to `55 µF` (`45%` loss)** |
+| **Case 2 (Moderate 25%, $k=7/16$): DiCA / ISQED'25 [5],[7]** | `4,760 B` | `1.586 ms` | `29.83 µJ` | `1,523.2 µs` | Fails at $\le 80\,\mu\text{F}$ (`20%` loss) |
+| **Case 2 (Moderate 25%, $k=7/16$): PhoenixCore (Ours)** | **`2,584 B` (`-45.7%`)** | **`0.855 ms`** | **`16.08 µJ` (`-46.1%`)** | **`89.6 µs` (`17.0×` faster)** | **Survives down to `55 µF` (`45%` loss)** |
+| **Case 3 (Dense 50%, $k=8/16$): DiCA / ISQED'25 [5],[7]** | `9,368 B` | `3.122 ms` | `58.72 µJ` | `2,997.8 µs` | Fails at $\le 80\,\mu\text{F}$ (`20%` loss) |
+| **Case 3 (Dense 50%, $k=8/16$): PhoenixCore (Ours)** | **`5,528 B` (`-41.0%`)** | **`1.831 ms`** | **`34.45 µJ` (`-41.3%`)** | **`89.6 µs` (`33.5×` faster)** | **Survives down to `55 µF` (`45%` loss)** |
 
-3. **Run Open-Source Gate-Level Synthesis (`yosys`) & Sky130A ASIC Flow (`openlane`):**
+---
 
-   ```
-   yosys -s synth_phoenixcore.ys
-   # If OpenLane 2 is installed:
-   openlane config.json
-   
-   ```
+## 6. Measured Hardware Synthesis & Physical Signoff Metrics
 
-4. **Digilent Basys3 (`XC7A35T`) FPGA Synthesis (Xilinx Vivado):**
+### A. Xilinx Artix-7 (`XC7A35T` Digilent Basys3) Full-SoC Utilization (`Logfile hash: b5dbe39415`)
+* **Total Yosys Cells (`8,046`):** **`8,044` Xilinx 7-Series logic/register primitives** + **`2` hard memory macro instances** (`sram_16kb_bram_macro` and `fram_32kb_bram_macro`, mapping to **`12 × RAMB36E1` Block RAMs** [`24.00%` of Basys3's 50 BRAMs]).
+* **Breakdown of `8,044` Primitives:** **`4,580` LUTs (`22.02%`)** (`1,588` LUT6, `1,049` LUT5, `648` LUT4, `396` LUT3, `831` LUT2, `68` LUT1) + **`2,031` `FDRE` flip-flops (`4.88%`)** + **`32` `RAM32X1D` LUT-RAMs** + **`498` `MUXCY` + `456` `XORCY` carry chains** + **`368` `MUXF7` + `79` `MUXF8` wide muxes** = `8,044`.
 
-   * Create a new RTL project in Vivado targeting `xc7a35tcpg236-1` (Digilent Basys3).
+### B. OpenLane 2 SkyWater 130 nm (`Sky130A`) Physical GDSII Signoff (`RUN_2026-11-10_11-22-23`)
+* **Die & Core Dimensions:** **`357.685 µm × 368.405 µm` die** (`0.132 mm²`), **`119,653.507 µm²` core area**, **`64,753.354 µm²` standard-cell area**.
+* **Core Utilization:** **`55.534%` OpenROAD GPL placement utilization** (`64,753.354 / (119,653.507 - 3,051.677) = 55.534%` after subtracting `3,051.677 µm²` of non-placeable tap/obstruction area with `GPL_CELL_PADDING = 2`; **`54.117%` raw cell/core area ratio**).
+* **Physical Instance Breakdown (`6,199` total cells):** **`939` sequential DFFs** (reduced from `3,219` unoptimized DFFs via on-the-fly 128-bit round-key expansion and direct `0xFE0–0xFFF` FRAM shadow streaming), **`3,270` multi-input combinational cells**, **`1,677` tap/decap cells**, **`254` fill cells**, and **`59` buffers/inverters**.
+* **Signoff Verification (`78/78` Stages Complete in `08m 19s`):** **9-Corner Setup STA (`0` violations)**, **9-Corner Hold STA (`0` violations)**, **Max Capacitance STA (`0` violations)**, **Netgen LVS (`Passed ✅`)**, and **Magic / KLayout DRC (`Passed ✅`)**.
 
-   * Add `phoenixcore_top.v` as design source and `basys3_phoenixcore.xdc` as constraints.
+---
 
-   * Use `SW0 = 0` for **On-Chip 32 KB BRAM FRAM Loopback Emulation** (single-USB-cable lab testing with `BTNC` = brownout cut and `BTND` = tamper zeroize) or `SW0 = 1` for **External PMOD Header `JA` SPI FRAM (`MB85RS256B`)**.
-
-## 5. Benchmark Summary (50 MHz Core, 25 MHz SPI FRAM, 100 µF Buffer)
-
-| Workload / Scheme | FRAM Bytes Written | Save Latency | Save Energy | Wake-Up Latency | Capacitor-Aging Survival (`100 → 55 µF`) | 
-| ----- | ----- | ----- | ----- | ----- | ----- | 
-| **SW Full-Copy Baseline** | `16,536 B` | `11.244 ms` | `211.51 µJ` | `2,670.1 µs` | Fails at $\le 90\,\mu\text{F}$ (`10%` loss) | 
-| **Case 1 (Sparse 12.5%): DiCA / ISQED'25** | `2,456 B` | `0.818 ms` | `15.38 µJ` | `704.0 µs` | Fails at $\le 80\,\mu\text{F}$ (`20%` loss) | 
-| **Case 1 (Sparse 12.5%): PhoenixCore (Ours)** | **`1,240 B` (`-49.5%`)** | **`0.409 ms`** | **`7.70 µJ` (`-49.9%`)** | **`89.6 µs` (`7.9×`)** | **Survives down to `55 µF` (`45%` loss)** | 
-| **Case 2 (Moderate 25%): DiCA / ISQED'25** | `4,760 B` | `1.586 ms` | `29.83 µJ` | `1,359.4 µs` | Fails at $\le 80\,\mu\text{F}$ (`20%` loss) | 
-| **Case 2 (Moderate 25%): PhoenixCore (Ours)** | **`2,584 B` (`-45.7%`)** | **`0.855 ms`** | **`16.08 µJ` (`-46.1%`)** | **`89.6 µs` (`15.2×`)** | **Survives down to `55 µF` (`45%` loss)** | 
-| **Case 3 (Dense 50%): DiCA / ISQED'25** | `9,368 B` | `3.122 ms` | `58.72 µJ` | `2,670.1 µs` | Fails at $\le 80\,\mu\text{F}$ (`20%` loss) | 
-| **Case 3 (Dense 50%): PhoenixCore (Ours)** | **`5,528 B` (`-41.0%`)** | **`1.831 ms`** | **`34.45 µJ` (`-41.3%`)** | **`89.6 µs` (`29.8×`)** | **Survives down to `55 µF` (`45%` loss)** | 
-
-## 6. Team Roster (`NEXUS V` — `M2026-165`)
-
-* **Akif Mohamed J (Team Lead):** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli — *SoC Architecture, PC-WMC/CLJ RTL, AES-128 Zeroizer, & Sky130A Physical Design* (`akifmohamed2217@gmail.com`)
-
-* **Nandikha M:** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli — *Pre-Silicon Verification, 1,000-Trial Brownout/Aging Regression, & Vivado STA/Power* (`sisterapk1237@gmail.com`)
-
-* **Mariam Farisha D:** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli — *Bare-Metal RISC-V C Workloads, Hot-Restore Boot Firmware, & UART Telemetry* (`mariyamfarisha90@gmail.com`)
-
-* **Hiran Sruthi N:** B.E. ECE (IV Year), Alagappa Chettiar Government College of Engineering & Technology, Karaikudi — *SH-PDAT* $\Delta V$ *Aging Calibrator RTL & Basys3 7-Segment/PMOD Integration* (`hiransruthi11mar@gmail.com`)
-
-* **Dharshini K:** B.E. ECE (IV Year), Alagappa Chettiar Government College of Engineering & Technology, Karaikudi — *BQ25570 Harvester + 100 µF Supercap + MB85RS256B KiCad Schematic, 4-Layer PCB, & BOM* (`dharshinisuyam11@gmail.com`)
+## 7. Team Roster (`NEXUS V` — `M2026-165`)
+* **Akif Mohamed J (Team Lead):** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli (`akifmohamed2217@gmail.com`)
+* **Nandikha M:** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli (`sisterapk1237@gmail.com`)
+* **Mariam Farisha D:** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli (`mariyamfarisha90@gmail.com`)
+* **Hiran Sruthi N:** B.E. ECE (IV Year), Alagappa Chettiar Government College of Engineering & Technology, Karaikudi (`hiransruthi11mar@gmail.com`)
+* **Dharshini K:** B.E. ECE (IV Year), Alagappa Chettiar Government College of Engineering & Technology, Karaikudi (`dharshinisuyam11@gmail.com`)

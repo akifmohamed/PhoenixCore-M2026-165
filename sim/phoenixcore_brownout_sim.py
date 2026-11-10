@@ -59,7 +59,7 @@ def evaluate_3way_comparison(dirty_blocks: int, active_word_ratio: float, label:
     v_trig_bd = math.sqrt(V_MIN**2 + (2.0 * (bd_energy_uj * 1.20 * 1e-6) / c_farad))
     e_usable_bd_uj = 0.5 * c_farad * (VDD**2 - v_trig_bd**2) * 1e6
 
-    # 3. Proposed PhoenixCore: Pre-Crypto 16-bit Word-Mask (w_mask[15:0]) suppresses zero/unchanged words
+    # 3. Proposed PhoenixCore: Pre-Crypto 16-bit Word-Mask (w_mask[15:0]) suppresses intra-block zero-valued words (word == 0)
     # Each dirty block carries: 2B Gen + 2B Idx + 2B w_mask + (active_words * 4B) + 4B MAC
     active_words_per_blk = max(1, int(round(16 * active_word_ratio)))
     pc_blk_bytes = 6 + (active_words_per_blk * 4) + 4
@@ -72,7 +72,8 @@ def evaluate_3way_comparison(dirty_blocks: int, active_word_ratio: float, label:
     e_usable_pc_uj = 0.5 * c_farad * (VDD**2 - v_trig_pc**2) * 1e6
 
     # Wake-up Time-to-First-Instruction (Hot-Block Priority Restore: 136B Regs + 2 x 64B Hot Blocks + 16B Commit = 280B)
-    full_restore_us = ((ARCH_STATE_BYTES + dirty_blocks * 64 + 16) * 16 / F_CORE_HZ) * 1e6
+    sw_full_restore_us = (sw_bytes * 16 / F_CORE_HZ) * 1e6
+    bd_full_restore_us = (bd_bytes * 16 / F_CORE_HZ) * 1e6
     hot_restore_us = ((ARCH_STATE_BYTES + 2 * 64 + 16) * 16 / F_CORE_HZ) * 1e6  # 89.6 us
 
     return {
@@ -98,7 +99,8 @@ def evaluate_3way_comparison(dirty_blocks: int, active_word_ratio: float, label:
         "usable_sw_uj": round(e_usable_sw_uj, 1),
         "usable_bd_uj": round(e_usable_bd_uj, 1),
         "usable_pc_uj": round(e_usable_pc_uj, 1),
-        "full_restore_us": round(full_restore_us, 1),
+        "sw_full_restore_us": round(sw_full_restore_us, 1),
+        "bd_full_restore_us": round(bd_full_restore_us, 1),
         "hot_restore_us": round(hot_restore_us, 1),
     }
 

@@ -65,8 +65,7 @@ module phoenixcore_top (
     wire [3:0]  an;
     wire [11:0] v_aging_offset_mv;
     wire [11:0] v_trig_mv;
-    wire [1407:0] key_schedule_bus;
-    wire [127:0]  aes_master_key = key_schedule_bus[127:0];
+    wire          key_all_zero_flag;
 
     // =========================================================================
     // 1. BLOCK-RAM INFERRED 16 KB VOLATILE SRAM & PERSISTENT FRAM EMULATOR
@@ -143,8 +142,8 @@ module phoenixcore_top (
         .adc_vcap_mv           (adc_vcap_mv),
         .mem_valid             (mem_valid),
         .mem_ready             (mem_ready),
-        .mem_addr              (mem_addr),
-        .mem_wdata             (mem_wdata),
+        .mem_addr_lo           (mem_addr[13:0]),
+        .mem_addr_hi_zero      (mem_addr[31:14] == 18'd0),
         .mem_wstrb             (mem_wstrb),
         .ckpt_halt_req         (ckpt_halt_req),
         .ckpt_halted_ack       (ckpt_halted_ack),
@@ -175,10 +174,10 @@ module phoenixcore_top (
         .led_ckpt_busy         (led_ckpt_busy),
         .led_restore_ok        (led_restore_ok),
         .led_tamper_alarm      (led_tamper_alarm),
+        .key_all_zero_flag     (key_all_zero_flag),
         .committed_gen_id      (committed_gen_id),
         .v_aging_offset_mv     (v_aging_offset_mv),
-        .v_trig_mv_out         (v_trig_mv),
-        .key_schedule_bus_out  (key_schedule_bus)
+        .v_trig_mv_out         (v_trig_mv)
     );
 
     // =========================================================================

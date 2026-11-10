@@ -23,7 +23,8 @@
       "usable_sw_uj": 128.7,
       "usable_bd_uj": 364.0,
       "usable_pc_uj": 373.3,
-      "full_restore_us": 704.0,
+      "sw_full_restore_us": 5291.5,
+      "bd_full_restore_us": 785.9,
       "hot_restore_us": 89.6
     },
     {
@@ -49,7 +50,8 @@
       "usable_sw_uj": 128.7,
       "usable_bd_uj": 346.7,
       "usable_pc_uj": 363.2,
-      "full_restore_us": 1359.4,
+      "sw_full_restore_us": 5291.5,
+      "bd_full_restore_us": 1523.2,
       "hot_restore_us": 89.6
     },
     {
@@ -75,7 +77,8 @@
       "usable_sw_uj": 128.7,
       "usable_bd_uj": 312.0,
       "usable_pc_uj": 341.2,
-      "full_restore_us": 2670.1,
+      "sw_full_restore_us": 5291.5,
+      "bd_full_restore_us": 2997.8,
       "hot_restore_us": 89.6
     }
   ],

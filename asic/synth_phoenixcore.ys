@@ -1,10 +1,8 @@
 read_verilog phoenixcore_top.v
 hierarchy -check -top phoenixcore_top
-proc; opt; fsm; opt; memory; opt
-techmap; opt
-dfflibmap -liberty +/simcells.v
+synth -top phoenixcore_top
 abc -g AND,NAND,OR,NOR,XOR,XNOR,MUX
-clean
+opt_clean
 stat
 write_verilog -noattr phoenixcore_synth_netlist.v
 write_json phoenixcore_synth.json
