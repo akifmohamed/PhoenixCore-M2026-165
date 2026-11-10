@@ -102,7 +102,7 @@ openlane config.json || nix run github:efabless/openlane2 -- config.json
 
 ## 6. Measured Hardware Synthesis & Physical Signoff Metrics
 
-### A. Xilinx Artix-7 (`XC7A35T` Digilent Basys3) Full-SoC Utilization (`Logfile hash: b5dbe39415`)
+### A. Xilinx Artix-7 (`XC7A35T` Digilent Basys3) Yosys Technology-Mapped Synthesis Utilization (synth_xilinx -family xc7) (`Logfile hash: b5dbe39415`)
 * **Total Yosys Cells (`8,046`):** **`8,044` Xilinx 7-Series logic/register primitives** + **`2` hard memory macro instances** (`sram_16kb_bram_macro` and `fram_32kb_bram_macro`, mapping to **`12 × RAMB36E1` Block RAMs** [`24.00%` of Basys3's 50 BRAMs]).
 * **Breakdown of `8,044` Primitives:** **`4,580` LUTs (`22.02%`)** (`1,588` LUT6, `1,049` LUT5, `648` LUT4, `396` LUT3, `831` LUT2, `68` LUT1) + **`2,031` `FDRE` flip-flops (`4.88%`)** + **`32` `RAM32X1D` LUT-RAMs** + **`498` `MUXCY` + `456` `XORCY` carry chains** + **`368` `MUXF7` + `79` `MUXF8` wide muxes** = `8,044`.
 
