@@ -102,7 +102,7 @@ openlane config.json || nix run github:efabless/openlane2 -- config.json
 
 ## 6. Measured Hardware Synthesis & Physical Signoff Metrics
 
-### A. Xilinx Artix-7 (`XC7A35T` Digilent Basys3) Yosys Technology-Mapped Synthesis Utilization (synth_xilinx -family xc7) (`Logfile hash: b5dbe39415`)
+### A. Xilinx Artix-7 (`XC7A35T` Digilent Basys3) Yosys Technology-Mapped Synthesis Utilization (`synth_xilinx -family xc7`, `Logfile hash: b5dbe39415`)
 * **Total Yosys Cells (`8,046`):** **`8,044` Xilinx 7-Series logic/register primitives** + **`2` hard memory macro instances** (`sram_16kb_bram_macro` and `fram_32kb_bram_macro`, mapping to **`12 × RAMB36E1` Block RAMs** [`24.00%` of Basys3's 50 BRAMs]).
 * **Breakdown of `8,044` Primitives:** **`4,580` LUTs (`22.02%`)** (`1,588` LUT6, `1,049` LUT5, `648` LUT4, `396` LUT3, `831` LUT2, `68` LUT1) + **`2,031` `FDRE` flip-flops (`4.88%`)** + **`32` `RAM32X1D` LUT-RAMs** + **`498` `MUXCY` + `456` `XORCY` carry chains** + **`368` `MUXF7` + `79` `MUXF8` wide muxes** = `8,044`.
 
@@ -112,9 +112,29 @@ openlane config.json || nix run github:efabless/openlane2 -- config.json
 * **Physical Instance Breakdown (`6,199` total cells):** **`939` sequential DFFs** (reduced from `3,219` unoptimized DFFs via on-the-fly 128-bit round-key expansion and direct `0xFE0–0xFFF` FRAM shadow streaming), **`3,270` multi-input combinational cells**, **`1,677` tap/decap cells**, **`254` fill cells**, and **`59` buffers/inverters**.
 * **Signoff Verification (`78/78` Stages Complete in `08m 19s`):** **9-Corner Setup STA (`0` violations)**, **9-Corner Hold STA (`0` violations)**, **Max Capacitance STA (`0` violations)**, **Netgen LVS (`Passed ✅`)**, and **Magic / KLayout DRC (`Passed ✅`)**.
 
+
 ---
 
-## 7. Team Roster (`NEXUS V` — `M2026-165`)
+## 7. Live Execution & Silicon Signoff Image Proofs (`docs/proofs/`)
+
+### 7.1 Icarus Verilog Cycle-Accurate RTL Verification (`4 / 4 Hardware Tests Passed`)
+![Icarus Verilog 4/4 Passed](docs/proofs/01_iverilog_4_of_4_tests_passed.jpg)
+
+### 7.2 GTKWave Cycle-Accurate Waveform (`0 to 21.83 µs`)
+![GTKWave Waveform Proof](docs/proofs/02_gtkwave_waveform_proof.png)
+
+### 7.3 Yosys 0.9 ASIC Macro & Xilinx Artix-7 (`synth_xilinx -family xc7`) Synthesis
+![Yosys Synthesis Proof](docs/proofs/03_yosys_asic_and_artix7_synthesis.png)
+
+### 7.4 OpenLane 2 (`Sky130A`) Stage 78/78 Signoff (`0 Setup / 0 Hold / 0 Max-Cap / LVS Passed / DRC Passed`)
+![OpenLane 2 Stage 78 Signoff](docs/proofs/04_openlane2_stage78_drc_lvs_sta_passed.jpg)
+
+### 7.5 KLayout 0.30.9 Physical SkyWater 130 nm (`Sky130A`) GDSII Layout (`phoenixcore_asic_macro.gds`)
+![KLayout GDSII Layout](docs/proofs/05_klayout_sky130a_gdsii_layout.jpg)
+
+---
+
+## 8. Team Roster (`NEXUS V` — `M2026-165`)
 * **Akif Mohamed J (Team Lead):** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli (`akifmohamed2217@gmail.com`)
 * **Nandikha M:** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli (`sisterapk1237@gmail.com`)
 * **Mariam Farisha D:** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli (`mariyamfarisha90@gmail.com`)
