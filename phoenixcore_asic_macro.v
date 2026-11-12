@@ -320,8 +320,7 @@ module phoenixcore_asic_macro (
                             ckpt_reg_idx <= 5'd0;
                             fram_addr    <= {hot_blk_last, 4'd0};
                             restore_done_flag <= 1'b1;
-                            led_restore_ok <= 1'b1;
-                            fsm_state <= ST_RESTORE_REGS;
+                                                        fsm_state <= ST_RESTORE_REGS;
                         end
                     end else begin
                         ckpt_halt_req <= 1'b0;
