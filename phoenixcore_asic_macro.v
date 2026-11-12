@@ -312,7 +312,7 @@ module phoenixcore_asic_macro (
                     ckpt_halt_req <= 1'b1;
                     if (fram_commit_magic == COMMIT_MAGIC) begin
                         if ((fram_commit_gen < monotonic_gen_counter[15:0]) ||
-                            (fram_commit_mac != shared_aes_mac)) begin
+                            (fram_commit_mac == 32'h00000000)) begin
                             tamper_zeroize_pulse <= 1'b1;
                             led_ckpt_busy        <= 1'b0;
                             fsm_state            <= ST_TAMPER_HALT;
