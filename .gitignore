@@ -2,3 +2,6 @@
 *.vcd
 __pycache__/
 *.log
+
+runs/
+*.bak
