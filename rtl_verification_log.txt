@@ -16,16 +16,19 @@ VCD info: dumpfile phoenixcore_wave.vcd opened for output.
 
 [TEST 3] Injecting mid-checkpoint TORN-WRITE power cut during Generation 2 save...
   -> Post-Recovery Authoritative Generation ID = 1 (Expected: 1, torn Gen 2 discarded)
-  -> Restore Verified Status (led_restore_ok)  = 1
-  [PASS] Torn mid-save write safely ignored; Generation 1 restored with 0 corruption!
+  -> Restore Verified Status (led_restore_ok)  = 0
+  [FAIL] Torn-write recovery failed!
 
 [TEST 4] Injecting adversarial tamper/rollback event (btn_inject_tamper = 1)...
-  -> AES Key before tamper = 0xa55a9c3ff00dcafe13572468deadbeef
+  -> AES Key before tamper = 0x00000000000000000000000000000000
   -> AES Key 1 cycle (20 ns) after tamper = 0x00000000000000000000000000000000
+  -> Full 1,408-bit Key Schedule OR-Sum   = 0x0 (All 1,408 FFs = 0!)
+  -> Persistent Timekeeper Ticks Survived = 1084 ticks
+  -> Basys3 7-Seg (an=1110, seg=1111001) & UART TX Active
   -> Tamper Alarm LED (led_tamper_alarm)  = 1
   [PASS] 1-Cycle Hardware Key Zeroization verified in 20 ns (1 clock tick)!
 
 ======================================================================
- SUMMARY: 4 / 4 HARDWARE VERIFICATION TESTS PASSED (0 FAILED)
+ SUMMARY: 3 / 4 HARDWARE VERIFICATION TESTS PASSED (1 FAILED)
  Waveform saved to: phoenixcore_wave.vcd
 ======================================================================

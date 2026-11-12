@@ -140,3 +140,19 @@ openlane config.json || nix run github:efabless/openlane2 -- config.json
 * **Mariam Farisha D:** B.E. ECE (IV Year), Government College of Engineering, Srirangam, Tiruchirappalli (`mariyamfarisha90@gmail.com`)
 * **Hiran Sruthi N:** B.E. ECE (IV Year), Alagappa Chettiar Government College of Engineering & Technology, Karaikudi (`hiransruthi11mar@gmail.com`)
 * **Dharshini K:** B.E. ECE (IV Year), Alagappa Chettiar Government College of Engineering & Technology, Karaikudi (`dharshinisuyam11@gmail.com`)
+
+---
+
+## 8. Silicon Signoff & Verification Visual Proof Gallery (`docs/proofs/`)
+
+### A. OpenROAD Full-Die Sky130A Layout (`357.69 µm × 368.41 µm`, `55.53%` GPL Utilization, `LVS & DRC Passed`)
+[docs/proofs/07_openroad_full_die_layout.png]
+
+### B. OpenROAD `1 µm` Standard-Cell Zoom (`clkbuf_0_clk` CTS Buffer, `hold390` Hold Buffers, & `fanout` Trees)
+[docs/proofs/09_openroad_1um_cell_cts_hold_zoom.png]
+
+### C. KLayout `0.30.9` Final GDSII Mask (`phoenixcore_asic_macro.gds` with `sky130A.lyp`)
+[docs/proofs/05_klayout_sky130a_black_bg.png]
+
+### D. OpenROAD GUI Full-Chip Inspection Window
+[docs/proofs/06_openroad_gui_overview.png]

@@ -1,4 +1,4 @@
-read_verilog phoenixcore_asic_macro.v
+read_verilog -DSYNTHESIS phoenixcore_asic_macro.v
 hierarchy -check -top phoenixcore_asic_macro
 synth -top phoenixcore_asic_macro
 abc -g AND,NAND,OR,NOR,XOR,XNOR,MUX
