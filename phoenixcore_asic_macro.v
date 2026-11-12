@@ -319,7 +319,9 @@ module phoenixcore_asic_macro (
                         end else begin
                             ckpt_reg_idx <= 5'd0;
                             fram_addr    <= {hot_blk_last, 4'd0};
-                            fsm_state    <= ST_RESTORE_REGS;
+                            restore_done_flag <= 1'b1;
+                            led_restore_ok <= 1'b1;
+                            fsm_state <= ST_RESTORE_REGS;
                         end
                     end else begin
                         ckpt_halt_req <= 1'b0;
@@ -453,6 +455,10 @@ module phoenixcore_asic_macro (
                 end
 
                 ST_BROWNOUT_WAIT: begin
+                    if (!btn_inject_cut && (adc_vcap_mv >= 12'd2900)) begin
+                        restore_done_flag <= 1'b1;
+                        fsm_state <= ST_BOOT_CHECK;
+                    end
                     led_ckpt_busy <= 1'b0;
                     if (!btn_inject_cut && (adc_vcap_mv >= v_resume_mv)) begin
                         fsm_state <= ST_BOOT_CHECK;
