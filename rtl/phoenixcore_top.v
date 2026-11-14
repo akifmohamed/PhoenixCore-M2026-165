@@ -30,7 +30,10 @@ module phoenixcore_top (
     output wire        led_ckpt_busy,
     output wire        led_restore_ok,
     output wire        led_tamper_alarm,
-    output wire [15:0] committed_gen_id
+    output wire [15:0] committed_gen_id,
+    output wire        uart_tx,
+    output wire [6:0]  seg,
+    output wire [3:0]  an
 );
 
     wire        mem_valid;
@@ -60,9 +63,6 @@ module phoenixcore_top (
     wire [31:0] fram_wdata;
     reg  [31:0] fram_rdata;
 
-    wire        uart_tx;
-    wire [6:0]  seg;
-    wire [3:0]  an;
     wire [11:0] v_aging_offset_mv;
     wire [11:0] v_trig_mv;
     wire          key_all_zero_flag;
