@@ -128,28 +128,28 @@ openlane config.json || nix run github:efabless/openlane2 -- config.json
 ## 7. Live Execution & Silicon Signoff Image Proofs (`docs/proofs/`)
 
 ### 7.1 Icarus Verilog Cycle-Accurate RTL Verification (`4 / 4 Hardware Tests Passed`)
-
+![Icarus Verilog 4/4 Passed](docs/proofs/01_iverilog_4_of_4_tests_passed.jpg)
 
 ### 7.2 GTKWave Cycle-Accurate Waveform (`0 to 21.83 µs`, `0x021 = 33` Dirty Blocks)
-
+![GTKWave Waveform Proof](docs/proofs/02_gtkwave_waveform_proof.png)
 
 ### 7.3 Yosys 0.9 ASIC Macro & Xilinx Artix-7 (`synth_xilinx -family xc7`) Synthesis
-
+![Yosys Synthesis Proof](docs/proofs/03_yosys_asic_and_artix7_synthesis.png)
 
 ### 7.4 OpenLane 2 (`Sky130A`) Stage 78/78 Signoff (`0 Setup / 0 Hold / 0 Max-Cap / LVS Passed / DRC Passed`)
-
+![OpenLane 2 Stage 78 Signoff](docs/proofs/04_openlane2_stage78_drc_lvs_sta_passed.jpg)
 
 ### 7.5 OpenROAD Full-Die Sky130A Layout (`357.69 µm × 368.41 µm`, `55.53%` GPL Utilization)
-
+![OpenROAD Full Die Layout](docs/proofs/07_openroad_full_die_layout.png)
 
 ### 7.6 OpenROAD `1 µm` Standard-Cell Zoom (`clkbuf_0_clk` CTS Buffer, `hold390` Hold Buffers, & `fanout` Trees)
-
+![OpenROAD 1um Cell Zoom](docs/proofs/09_openroad_1um_cell_cts_hold_zoom.png)
 
 ### 7.7 KLayout `0.30.9` Final GDSII Mask (`phoenixcore_asic_macro.gds` with `sky130A.lyp`)
-
+![KLayout Black BG GDSII](docs/proofs/05_klayout_sky130a_black_bg.png)
 
 ### 7.8 Digilent Basys3 FPGA & KiCad PMOD Daughterboard Schematic (`TI BQ25570 + Fujitsu MB85RS256TY`)
-
+![Basys3 FPGA PMOD Schematic](docs/proofs/fig6_fpga_pmod_schematic.png)
 
 ---
 
