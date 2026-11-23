@@ -10,16 +10,16 @@
 
 | Deliverable | Direct Link / File | Description |
 | :--- | :--- | :--- |
-| **Detailed Project Report (PDF)** | [docs/M2026-165\_PhoenixCore\_DPR.pdf](https://www.google.com/search?q=docs/M2026-165_PhoenixCore_DPR.pdf) | Final 8-page A4 lossless IEEE two-column DPR (with clickable links, Figs. 1–6, Tables I–IV, & Checklist) |
-| **Detailed Project Report (DOCX)** | [docs/M2026-165\_PhoenixCore\_DPR.docx](https://www.google.com/search?q=docs/M2026-165_PhoenixCore_DPR.docx) | Editable Word source matching the final A4 PDF |
-| **Final Presentation Deck (PDF)** | [docs/M2026-165\_PhoenixCore\_Final\_Presentation.pdf](https://www.google.com/search?q=docs/M2026-165_PhoenixCore_Final_Presentation.pdf) | 10-slide Final Round-02 presentation (Problem, Related Work, Architecture, Results, Basys3 FPGA, Novelty, & Impact) |
-| **Final Presentation Deck (PPTX)** | [docs/M2026-165\_PhoenixCore\_Final\_Presentation.pptx](https://www.google.com/search?q=docs/M2026-165_PhoenixCore_Final_Presentation.pptx) | Editable PowerPoint source of the Final Round-02 deck |
+| **Detailed Project Report (PDF)** | [`docs/M2026-165_PhoenixCore_DPR.pdf`](docs/M2026-165_PhoenixCore_DPR.pdf) | Final 8-page A4 lossless IEEE two-column DPR (clickable links, Figs. 1–6, Tables I–IV, & Checklist) |
+| **Detailed Project Report (DOCX)** | [`docs/M2026-165_PhoenixCore_DPR.docx`](docs/M2026-165_PhoenixCore_DPR.docx) | Editable Word source matching the final A4 PDF |
+| **Final Presentation Deck (PDF)** | [`docs/M2026-165_PhoenixCore_Final_Presentation.pdf`](docs/M2026-165_PhoenixCore_Final_Presentation.pdf) | 10-slide Final Round-02 presentation (Problem, Related Work, Architecture, Results, Basys3 FPGA, & Impact) |
+| **Final Presentation Deck (PPTX)** | [`docs/M2026-165_PhoenixCore_Final_Presentation.pptx`](docs/M2026-165_PhoenixCore_Final_Presentation.pptx) | Editable PowerPoint source of the Final Round-02 deck |
 | **Narrated Live Demo Video** | [https://youtu.be/zddmPC3iUGQ](https://youtu.be/zddmPC3iUGQ) | 1.75-minute narrated walkthrough: Architecture, 4/4 GTKWave RTL, Sky130A GDSII, & Live Basys3 QSPI FPGA Demo |
-| **Hardware Documentation & Proofs** | [docs/proofs/](https://www.google.com/search?q=docs/proofs/) · [FPGA\_PROTOTYPE\_BRINGUP\_GUIDE.md](https://www.google.com/search?q=FPGA_PROTOTYPE_BRINGUP_GUIDE.md) · [phoenixcore\_bom.csv](https://www.google.com/search?q=phoenixcore_bom.csv) | Live Basys3 board photos, PMOD schematic, pinout/Vivado guide, and full BOM (`BQ25570` + `MB85RS256TY`) |
+| **Hardware Documentation & Proofs** | [`docs/proofs/`](docs/proofs/) · [`FPGA_PROTOTYPE_BRINGUP_GUIDE.md`](FPGA_PROTOTYPE_BRINGUP_GUIDE.md) · [`phoenixcore_bom.csv`](phoenixcore_bom.csv) | Live Basys3 board photos, PMOD schematic, pinout/Vivado guide, and full BOM (`BQ25570` + `MB85RS256TY`) |
 
 ---
 
-## 1. Overview & Problem Addressed
+## 1. Overview & Four Hardware Bottlenecks Addressed
 
 Batteryless edge nodes running on harvested solar, piezoelectric, or RF energy experience frequent supply brownouts ($V_{\text{cap}} < V_{\min} = 1.80\,\text{V}$) that erase volatile CPU registers and SRAM. While recent state-of-the-art architectures (**DiCA, ICCAD 2023 [5]**; **Palanisamy et al., ISQED 2025 [7]**) introduced block-level differential checkpointing and voltage triggers, they suffer from four hardware bottlenecks in real field deployments:
 
@@ -28,7 +28,7 @@ Batteryless edge nodes running on harvested solar, piezoelectric, or RF energy e
 3. **Full-Restore Boot Stalls:** Holding the CPU in reset until the entire checkpoint image streams back over 25 MHz SPI FRAM (`0.32 µs/B`) delays wake-up by `0.79–5.29 ms`.
 4. **Rollback & Glitch Vulnerability:** Static encryption keys on external serial FRAM remain vulnerable to mid-byte torn writes, checkpoint replay/rollback attacks [6], and physical tamper glitches.
 
-**PhoenixCore** resolves all four bottlenecks inside a verified **`4,580-LUT` (`22.02%` of Artix-7 `XC7A35T`, `8,046` total Yosys cells)** full SoC, implemented on a **live Digilent Basys3 FPGA booting permanently from `S25FL128S` QSPI Flash (`WNS = +8.625 ns`, `WHS = +0.068 ns`, `0` DRC errors)**, and verified through a **DRC/LVS/STA-clean SkyWater 130 nm (`Sky130A`) GDSII ASIC macro** (`357.69 µm × 368.41 µm` die, **`55.53%` OpenROAD GPL placement utilization** [`54.12%` raw cell/core area ratio], `6,199` physical instances, **`939` sequential DFFs**).
+**PhoenixCore** resolves all four bottlenecks in a synthesizable RTL SoC verified via **4/4 Icarus Verilog hardware tests**, a **1,000-trial seeded brownout/tamper campaign (`sim/sim_1000_trials_report.json`)**, a **live Digilent Basys3 Artix-7 FPGA (`S25FL128S` QSPI Flash boot)**, and a **SkyWater 130 nm (`Sky130A`) OpenLane 2 GDSII flow**.
 
 ---
 
@@ -37,9 +37,9 @@ Batteryless edge nodes running on harvested solar, piezoelectric, or RF energy e
 | Module | Micro-Architectural Mechanism | Measured / Simulated Advantage |
 | :--- | :--- | :--- |
 | **1. `PC-WMC`** | **Pre-Crypto Sub-Block Zero-Word Mask Compression:** 0-wait-state 256-bit (`8×32` banked) dirty bitmap + 1-cycle 16-bit active-word mask (`w_mask[15:0]`) suppressing zero-valued 32-bit words (`word == 0`) *before* AES encryption (`w_mask` is MAC-authenticated; a header bypass flag handles `k == 16`). | **41.3%–49.9% lower save energy** than DiCA'23 / ISQED'25 (`83.7%–96.4%` below SW full-copy). |
-| **2. `SH-PDAT`** | **Self-Healing Closed-Loop $\Delta V$ Capacitor-Aging Trigger:** Tracks $V_{\text{start}} - V_{\text{end}}$ across every checkpoint to calibrate effective capacitance $C_{\text{eff}}$ (+25 mV step when $V_{\text{end}} < 1.85\,\text{V}$; the $\gamma = 1.20$ **20% energy safety margin** covers single-step capacitance drops up to ~16.7% [$1 - 1/1.20$]). | **Survives up to 45% capacitor aging** (`100 µF → 55 µF`), whereas fixed-$C$ triggers fail at $\le 80\,\mu\text{F}$. |
-| **3. `CLJ-HPR`** | **Commit-Last Journal + 2-Block Hot-Priority Restore:** Appends a 16-byte Atomic Commit Frame (`0x5043`) last and restores `136 B` CPU registers + `2 × 64 B` active Stack/Data blocks (`280 B`) *first* on reboot. | **`89.6 µs` wake-up time-to-first-instruction** (`8.8×–33.5×` faster than DiCA; `59.0×` faster than SW) & `668/668` torn-write survival. |
-| **4. `Zeroizer`** | **Monotonic Anti-Rollback MAC + 1-Cycle Key Zeroizer:** Binds commits to a 64-bit monotonic counter; wipes active AES-128 key flip-flops and locks down the CPU in **1 clock cycle (`20 ns`)** on tamper/rollback. | **`166/166` (`100%`) detection** in simulation + live Basys3 `BTND` hardware lockdown (`LD11` ON, CPU halted). |
+| **2. `SH-PDAT`** | **Self-Healing Closed-Loop $\Delta V$ Capacitor-Aging Trigger:** Tracks $V_{\text{start}} - V_{\text{end}}$ across every checkpoint to calibrate effective capacitance $C_{\text{eff}}$ (`+25 mV` step when $V_{\text{end}} < 1.85\,\text{V}$; the $\gamma = 1.20$ **20% energy safety margin** covers single-step capacitance drops up to ~16.7% [$1 - 1/1.20$]). | **Survives up to 45% capacitor aging** (`100 µF → 55 µF`), whereas fixed-$C$ triggers fail at $\le 80\,\mu\text{F}$. |
+| **3. `CLJ-HPR`** | **Commit-Last Journal + 2-Block Hot-Priority Restore:** Appends a 16-byte Atomic Commit Frame (`0x5043`) last and restores `136 B` CPU registers + `2 × 64 B` active Stack/Data blocks (`280 B`) *first* on reboot. | **`89.6 µs` wake-up time-to-first-instruction** (`8.8×–33.5×` faster than DiCA; `59.0×` faster than SW) & `834/834` brownout recovery. |
+| **4. `Zeroizer`** | **Monotonic Anti-Rollback MAC + 1-Cycle Key Zeroizer:** Binds commits to a 64-bit monotonic counter; wipes active 128-bit `aes_master_key` flip-flops and locks down the CPU (`ST_TAMPER_HALT`) in **1 clock cycle** on tamper/rollback. | **`166/166` (`100%`) detection** in simulation + live Basys3 `BTND` hardware lockdown (`LD11` ON, CPU halted). |
 
 ---
 
@@ -47,17 +47,13 @@ Batteryless edge nodes running on harvested solar, piezoelectric, or RF energy e
 
 ```text
 PhoenixCore-M2026-165/
-├── README.md                                     # Project overview, deliverables, & 1-command reproducibility guide
-├── FPGA_PROTOTYPE_BRINGUP_GUIDE.md               # Digilent Basys3 silkscreen pinout, Vivado flow, & 4-step live demo guide
+├── README.md                                     # Project overview, benchmarks, & evaluator notes
+├── FPGA_PROTOTYPE_BRINGUP_GUIDE.md               # Digilent Basys3 silkscreen pinout & 4-step live demo guide
 ├── phoenixcore_bom.csv                           # Bill of Materials (TI BQ25570 + wide-VDD Fujitsu MB85RS256TY FRAM)
-├── requirements.txt                              # Python dependencies for simulation & UART dashboard
-├── run_ubuntu_flow.sh                            # Automated 6-stage verification, synthesis, & OpenLane 2 script
-├── M2026-165_PhoenixCore_DPR.pdf                 # Final A4 lossless IEEE Detailed Project Report (PDF)
-├── M2026-165_PhoenixCore_DPR.docx                # Editable A4 IEEE Detailed Project Report (DOCX)
-├── M2026-165_PhoenixCore_Final_Presentation.pdf  # Final 10-slide Round-02 Presentation (PDF)
-├── M2026-165_PhoenixCore_Final_Presentation.pptx # Final 10-slide Round-02 Presentation (PPTX)
+├── requirements.txt                              # Python dependencies (pyserial>=3.5 for UART dashboard)
+├── run_ubuntu_flow.sh                            # Automated Linux verification & synthesis script
 ├── rtl/
-│   ├── phoenixcore_asic_macro.v                  # Synthesizable PC-WMC, SH-PDAT, CLJ-HPR, 20 ns tamper lockdown, 380 Hz 7-seg, & UART
+│   ├── phoenixcore_asic_macro.v                  # Synthesizable PC-WMC, SH-PDAT, CLJ-HPR, 1-cycle zeroizer, 380 Hz 7-seg, & UART
 │   └── phoenixcore_top.v                         # Top-level RV32I + INT8 TinyML MAC + BRAM inference + 20 ms hardware debouncer
 ├── tb/
 │   └── tb_phoenixcore_top.v                      # Self-checking 4-stage hardware verification testbench (4/4 PASS)
@@ -69,46 +65,44 @@ PhoenixCore-M2026-165/
 │   ├── basys3_phoenixcore.xdc                    # Silkscreen-verified Digilent Basys3 constraints (SW0, SW1, SW4–SW15, LD0–LD15, PMOD JA/JB/JC)
 │   └── build_and_program_basys3.tcl              # Automated Vivado batch synthesis, P&R, bitstream, & USB-JTAG programming script
 ├── asic/
-│   ├── config.json                               # OpenLane 2 configuration for SkyWater 130 nm (Sky130A) RTL-to-GDSII
+│   ├── config.json                               # OpenLane 2 configuration for SkyWater 130 nm (Sky130A) RTL-to-GDSII (run from repo root)
 │   ├── phoenixcore_asic_macro.sdc                # OpenSTA timing constraints for Sky130A PnR & 9-corner signoff
-│   └── phoenixcore_asic_macro.gds                # Final DRC/LVS-clean Sky130A GDSII layout
+│   └── phoenixcore_asic_macro.gds                # Sky130A GDSII layout (pre-refactor Nov 10–12 signoff snapshot)
 └── docs/
-    ├── M2026-165_PhoenixCore_DPR.pdf             # Mirror of Final A4 DPR PDF
-    ├── M2026-165_PhoenixCore_DPR.docx            # Mirror of Final A4 DPR DOCX
-    ├── M2026-165_PhoenixCore_Final_Presentation.pdf  # Mirror of Final Presentation PDF
-    ├── M2026-165_PhoenixCore_Final_Presentation.pptx # Mirror of Final Presentation PPTX
+    ├── M2026-165_PhoenixCore_DPR.pdf             # Final A4 lossless IEEE Detailed Project Report (PDF)
+    ├── M2026-165_PhoenixCore_DPR.docx            # Editable A4 IEEE Detailed Project Report (DOCX)
+    ├── M2026-165_PhoenixCore_Final_Presentation.pdf  # Final 10-slide Round-02 Presentation (PDF)
+    ├── M2026-165_PhoenixCore_Final_Presentation.pptx # Final 10-slide Round-02 Presentation (PPTX)
     └── proofs/                                   # High-res GTKWave, Yosys, OpenROAD, KLayout, Basys3 FPGA, & PMOD schematic proofs
 ```
 
-*(Root-level mirrors of `phoenixcore_top.v`, `phoenixcore_asic_macro.v`, `tb_phoenixcore_top.v`, `basys3_phoenixcore.xdc`, `rtl_verification_log.txt`, and `yosys_*.txt` are synchronized with the subdirectories so single-folder commands work cleanly out of the box.)*
+*(Root-level mirrors of `phoenixcore_top.v`, `phoenixcore_asic_macro.v`, `tb_phoenixcore_top.v`, `basys3_phoenixcore.xdc`, and `rtl_verification_log.txt` are included so single-folder commands work directly.)*
 
 ---
 
-## 4. Quick-Start & Reproducibility Guide (Clean-Environment Setup)
+## 4. Quick-Start & Reproducibility Guide
 
 ```bash
 # 1. Run 1,000-Trial Brownout, 3-Way Benchmark, & Capacitor-Aging Simulator
-python3 phoenixcore_brownout_sim.py > sim_1000_trials_report.json
+python3 sim/phoenixcore_brownout_sim.py > sim/sim_1000_trials_report.json
 
 # 2. Run Cycle-Accurate RTL Simulation (4/4 Hardware Tests Pass) & View Waveform
-iverilog -o phoenixcore_sim.vvp phoenixcore_asic_macro.v phoenixcore_top.v tb_phoenixcore_top.v
+iverilog -o phoenixcore_sim.vvp rtl/phoenixcore_asic_macro.v rtl/phoenixcore_top.v tb/tb_phoenixcore_top.v
 vvp phoenixcore_sim.vvp | tee rtl_verification_log.txt
 gtkwave phoenixcore_wave.vcd
 
-# 3. Run Yosys ASIC Macro & Xilinx Artix-7 Basys3 Synthesis
-yosys -s synth_asic_macro.ys | tee yosys_asic_macro_report.txt
-yosys -s synth_basys3_fpga.ys | tee yosys_basys3_fpga_utilization.txt
-
-# 4. Build Digilent Basys3 Bitstream & Flash Board in Xilinx Vivado
+# 3. Build Digilent Basys3 Bitstream & Flash Board in Xilinx Vivado
 vivado -mode batch -source fpga/build_and_program_basys3.tcl
 
-# 5. Run OpenLane 2 Sky130A RTL-to-GDSII Signoff Flow
-openlane config.json || nix run github:efabless/openlane2 -- config.json
+# 4. Run OpenLane 2 Sky130A RTL-to-GDSII Flow (execute from repo root so asic/config.json resolves RTL paths)
+openlane asic/config.json || nix run github:efabless/openlane2 -- asic/config.json
 ```
 
 ---
 
-## 5. Benchmark Summary (`50 MHz` Core, `25 MHz` SPI FRAM [`0.32 µs/B`], `100 µF` Buffer)
+## 5. Benchmark Results (`sim/sim_1000_trials_report.json`)
+
+### A. Energy & Wake-Up Latency (`50 MHz` Core, `25 MHz` SPI FRAM [`0.32 µs/B`], `100 µF` Buffer)
 
 | Workload / Scheme | FRAM Bytes Written | Save Latency | Save Energy | Wake-Up Latency (`@ 25 MHz` SPI) | Capacitor-Aging Survival (`100 → 55 µF`) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -120,59 +114,43 @@ openlane config.json || nix run github:efabless/openlane2 -- config.json
 | **Case 3 (Dense 50%, $k=8/16$): DiCA / ISQED'25 [5],[7]** | `9,368 B` | `3.122 ms` | `58.72 µJ` | `2,997.8 µs` | Fails at $\le 80\,\mu\text{F}$ (`20%` loss) |
 | **Case 3 (Dense 50%, $k=8/16$): PhoenixCore (Ours)** | **`5,528 B` (`-41.0%`)** | **`1.831 ms`** | **`34.45 µJ` (`-41.3%`)** | **`89.6 µs` (`33.5×` faster)** | **Survives down to `55 µF` (`45%` loss)** |
 
+### B. 1,000-Trial Fault-Injection & 6-Step Capacitor-Aging Sweep (`100 µF → 55 µF`)
+* **1,000-Trial Seeded Campaign:** **`1,000 / 1,000` (`100%`)** pass rate — **`834 / 834`** exact state-digest brownout recoveries + **`166 / 166`** rollback/tamper detections with 1-cycle key zeroization.
+* **6-Step Aging Sweep (`100, 90, 80, 70, 60, 55 µF`):** Fixed-$C$ triggers [5],[7] collapse below $V_{\min} = 1.80\,\text{V}$ starting at `80 µF` (`1.767 → 1.567 V`), whereas PhoenixCore `SH-PDAT` raises $V_{\text{trig}}$ from `2.015 V` to `2.175 V` and holds $V_{\text{end}} \ge 1.838\,\text{V}$ all the way down to `55 µF` (`45%` loss).
+
 ---
 
-## 6. Measured Hardware Synthesis, FPGA, & Physical Signoff Metrics
+## 6. Live Digilent Basys3 QSPI FPGA Demo & Silicon Signoff
 
-### A. Xilinx Artix-7 (`XC7A35T` Digilent Basys3) Yosys Synthesis (`synth_xilinx -family xc7`, `hash: b5dbe39415`)
-* **Total Yosys Cells (`8,046`):** **`8,044` Xilinx 7-Series primitives** + **`2` hard memory macro instances** (`12 × RAMB36E1` Block RAMs [`24.00%` of Basys3]).
-* **Primitive Breakdown:** **`4,580` LUTs (`22.02%`)**, **`2,031` `FDRE` flip-flops (`4.88%`)**, **`32` `RAM32X1D` LUT-RAMs**, **`498` `MUXCY` + `456` `XORCY` carry chains**, and **`368` `MUXF7` + `79` `MUXF8` wide muxes**.
+### A. 4-Step Physical Basys3 Hardware Verification ([Demo Video](https://youtu.be/zddmPC3iUGQ))
+Permanently flashed to the Basys3 **Spansion `S25FL128S` Quad-SPI Flash** (`JP1 = QSPI`, `Vivado 2017.4`, `0` DRC errors, `WNS = +8.625 ns`, `WHS = +0.068 ns`, `WPWS = +9.500 ns` at `20.0 ns` / `50 MHz` constraint):
 
-### B. Xilinx Vivado 2017.4 Digilent Basys3 (`XC7A35T-1CPG236C`) Hardware & QSPI Flash Signoff
-* **Timing Closure (`50 MHz` Constraint):** **`WNS = +8.625 ns`**, **`WHS = +0.068 ns`**, **`WPWS = +9.500 ns`**, **`0` failing endpoints** out of `4,431`, **`0` DRC errors**.
-* **On-Board Non-Volatile Boot:** Permanently flashed to the Basys3 **Spansion `S25FL128S` Quad-SPI Flash** (`JP1 = QSPI`), featuring a `20 ms` 2-stage switch/button debouncer (`phoenixcore_top.v`) and `380 Hz` 4-digit 7-segment display multiplexer (`seg_div[18:17]`).
-* **4/4 Physical Board Tests Verified ([Demo Video](https://youtu.be/zddmPC3iUGQ)):**
-  1. **Test 1 (`SW15, SW14` UP):** `LD6` glows (`64` dirty blocks tracked in 0 wait states); 7-segment displays **`4000`**.
-  2. **Test 2 (`SW15` DOWN — Brownout):** `LD12` turns **ON** (`Gen 1` committed), `LD6` clears; 7-segment locks at **`0001`**.
-  3. **Test 3 (`SW15` UP — Power Return):** `LD10` (`led_restore_ok`) lights **ON**, `LD6` resumes; 7-segment shows **`4001`**.
-  4. **Test 4 (`BTND` — Physical Tamper):** `LD11` (`led_tamper_alarm`) latches **ON**, AES-128 key wipes in `20 ns`, CPU halts (**`0002`**) until `SW1` reset.
+| Step | Board Input | Observed LEDs | 7-Segment Display | Verified Hardware Behavior |
+| :--- | :--- | :--- | :--- | :--- |
+| **Test 1: Normal Run** | `SW1=1`, `SW15+SW14=1` (`3,072 mV`) | `LD6` ON (`0x040`) | **`4000`** | Tracks `64` dirty SRAM blocks in 0 wait states |
+| **Test 2: Brownout Save** | `SW15` DOWN (`1,024 mV`) | `LD12` ON, `LD6` OFF | **`0001`** | `PC-WMC` + `CLJ-HPR` commits `Gen 1` to NV memory |
+| **Test 3: Hot Restore** | `SW15` UP (`3,072 mV`) | `LD10`, `LD12`, `LD6` ON | **`4001`** | `89.6 µs` Hot-Priority Restore passes MAC check |
+| **Test 4: Tamper Halt** | Press `BTND` (`U17`) | `LD11` latched ON | **`0002`** | 1-cycle `128-bit` `aes_master_key` zeroization + `ST_TAMPER_HALT` |
 
-### C. OpenLane 2 SkyWater 130 nm (`Sky130A`) Physical GDSII Signoff (`RUN_2026-11-10_11-22-23`)
-* **Die & Core Dimensions:** **`357.685 µm × 368.405 µm` die** (`0.132 mm²`), **`119,653.507 µm²` core area**, **`64,753.354 µm²` standard-cell area**.
-* **Core Utilization:** **`55.534%` OpenROAD GPL placement utilization** (**`54.117%` raw cell/core area ratio**).
-* **Physical Instance Breakdown (`6,199` cells):** **`939` sequential DFFs** (down from `3,219` unoptimized DFFs), **`3,270` combinational cells**, **`1,677` tap/decap cells**, **`254` fill cells**, and **`59` buffers/inverters**.
-* **Signoff Verification (`78/78` Stages Complete):** **9-Corner Setup STA (`0`)**, **9-Corner Hold STA (`0`)**, **Max Capacitance STA (`0`)**, **Netgen LVS (`Passed ✅`)**, and **Magic / KLayout DRC (`Passed ✅`)**.
+### B. Verification Status & Known Limitations (Evaluator Notes)
+1. **128-bit Master Key vs. Pre-Refactor 1,408-bit Key Array:** The current refactored `rtl/phoenixcore_asic_macro.v` implements an on-the-fly **128-bit `aes_master_key`** zeroized in 1 clock cycle (the earlier pre-refactor Nov 10–12 behavioral/unoptimized model referenced `1,408` expanded key flops in the DPR/video).
+2. **Yosys & OpenLane 2 Snapshot Provenance:** The committed Yosys 0.9 report (`8,046` cells) and OpenLane 2 Sky130A GDSII run (`RUN_2026-11-10_11-22-23`, `357.69 × 368.41 µm`, `55.534%` GPL utilization, `6,199` instances, `939` DFFs, 9-corner STA/LVS/DRC clean) were generated on the **Nov 10–12 pre-refactor RTL**; re-running Yosys/OpenLane on the Nov 22 refactored RTL produces updated cell counts.
+3. **Basys3 Oscillator vs. XDC Constraint:** Digilent Basys3 pin `W5` is a `100 MHz` physical oscillator, while `fpga/basys3_phoenixcore.xdc` constrains `clk_50mhz` at `20.0 ns` (`50 MHz`, yielding `WNS = +8.625 ns`, i.e., `~11.375 ns` critical path). Closing full `100 MHz` (`10.0 ns`) timing or inserting an MMCM `÷2` divider is tracked for Round 03.
+4. **Physical PCB Scope:** No physical KiCad PCB has been fabricated yet; Round 02 delivers the live Basys3 QSPI FPGA prototype, PMOD interconnect schematic, and BOM (`phoenixcore_bom.csv`), with physical `TI BQ25570 + MB85RS256TY` PCB assembly scheduled for Phase 4 (Round 03).
 
 ---
 
 ## 7. Live Execution, FPGA, & Silicon Signoff Proofs (`docs/proofs/`)
 
-### 7.1 Live Digilent Basys3 Artix-7 QSPI FPGA Hardware Proof (Tests 1–4)
-
-
-### 7.2 Icarus Verilog Cycle-Accurate RTL Verification (`4 / 4 Hardware Tests Passed`)
-
-
-### 7.3 GTKWave Cycle-Accurate Waveform (`0 to 21.83 µs`, `0x021 = 33` Dirty Blocks)
-
-
-### 7.4 Yosys 0.9 ASIC Macro & Xilinx Artix-7 (`synth_xilinx -family xc7`) Synthesis
-
-
-### 7.5 OpenLane 2 (`Sky130A`) Stage 78/78 Signoff (`0 Setup / 0 Hold / 0 Max-Cap / LVS & DRC Passed`)
-
-
-### 7.6 OpenROAD Full-Die Sky130A Layout (`357.69 µm × 368.41 µm`, `55.53%` GPL Utilization)
-
-
-### 7.7 OpenROAD `1 µm` Standard-Cell Zoom (`clkbuf_0_clk` CTS Buffer, `hold390` Hold Buffers, & `fanout` Trees)
-
-
-### 7.8 KLayout `0.30.9` Final GDSII Mask (`phoenixcore_asic_macro.gds` with `sky130A.lyp`)
-
-
-### 7.9 Digilent Basys3 FPGA & PMOD Harvester/FRAM Interconnect Schematic (Round-03 PCB Target)
-
+* **Live Digilent Basys3 QSPI FPGA Proof (Tests 1–4):** [`docs/proofs/fig6_basys3_hardware_proof.png`](docs/proofs/fig6_basys3_hardware_proof.png)
+* **Basys3 PMOD Harvester/FRAM Interconnect Schematic:** [`docs/proofs/fig6_fpga_pmod_schematic.png`](docs/proofs/fig6_fpga_pmod_schematic.png)
+* **Icarus Verilog `4 / 4` Tests Passed:** [`docs/proofs/01_iverilog_4_of_4_tests_passed.jpg`](docs/proofs/01_iverilog_4_of_4_tests_passed.jpg)
+* **GTKWave Waveform (`0–21.83 µs`, `0x021 = 33` Blocks):** [`docs/proofs/02_gtkwave_waveform_proof.png`](docs/proofs/02_gtkwave_waveform_proof.png)
+* **Yosys ASIC & Artix-7 Synthesis:** [`docs/proofs/03_yosys_asic_and_artix7_synthesis.png`](docs/proofs/03_yosys_asic_and_artix7_synthesis.png)
+* **OpenLane 2 (`Sky130A`) Stage 78/78 Signoff:** [`docs/proofs/04_openlane2_stage78_drc_lvs_sta_passed.jpg`](docs/proofs/04_openlane2_stage78_drc_lvs_sta_passed.jpg)
+* **OpenROAD Full-Die Sky130A Layout:** [`docs/proofs/07_openroad_full_die_layout.png`](docs/proofs/07_openroad_full_die_layout.png)
+* **OpenROAD `1 µm` Standard-Cell Zoom:** [`docs/proofs/09_openroad_1um_cell_cts_hold_zoom.png`](docs/proofs/09_openroad_1um_cell_cts_hold_zoom.png)
+* **KLayout `0.30.9` Final GDSII Mask:** [`docs/proofs/05_klayout_sky130a_black_bg.png`](docs/proofs/05_klayout_sky130a_black_bg.png)
 
 ---
 
