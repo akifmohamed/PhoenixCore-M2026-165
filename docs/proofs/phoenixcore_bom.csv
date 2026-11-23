@@ -1,0 +1,13 @@
+Ref,Qty,Value,Footprint,Description,Suggested MPN
+U1,1,BQ25570,Texas_S-PVQFN-N20_EP2.4x2.4mm,Energy harvester / boost charger,BQ25570RGRR
+U2,1,MB85RS256TY,SOIC-8_3.9x4.9mm_P1.27mm,"32KB SPI FRAM, 1.8-3.6V",MB85RS256TYPNF-G-JNERE1
+L1,1,22uH,L_1210_3225Metric,Boost inductor,LQH32CN220K23L
+C_IN,1,4.7uF,C_0805_2012Metric,VIN_DC input cap,GRM21BR61E475KA12L
+C_DEC,1,100nF,C_0603_1608Metric,FRAM decoupling,GRM188R71H104KA93D
+R_PU,1,10k,R_0603_1608Metric,/CS pull-up to V_CAP,RC0603FR-0710KL
+R_DIV1,1,230k,R_0603_1608Metric,ADC divider top,RC0603FR-07230KL
+R_DIV2,1,100k,R_0603_1608Metric,ADC divider bottom,RC0603FR-07100KL
+C_BUF,1,100uF / 55uF socket,PinHeader_1x02_P2.54mm_Vertical,Removable buffer cap socket (1x2 header),PRPC002SAAN-RC
+J_HARV,1,Solar/Piezo,PinHeader_1x02_P2.54mm_Vertical,Harvester input (+ / -),PRPC002SAAN-RC
+J_PMOD_JA,1,PMOD_JA,PinHeader_2x06_P2.54mm_Horizontal,"Basys3 JA, 2x6 right-angle",PPPC062LJBN-RC
+J_XADC,1,JXADC,PinHeader_2x06_P2.54mm_Horizontal,"Basys3 JXADC, only pins 1 & 7 used",PPPC062LJBN-RC
